@@ -111,3 +111,4 @@ ML.GUT_PAGES = [
 
 ML.GROUP_ORDER = ['house', 'kids', 'family'];
 ML.GROUP_TITLES = { house: 'Around the house', kids: 'For the kids', family: 'For the family' };
+ML.GROUP_PHRASE = { house: 'around the house', kids: 'for the kids', family: 'for the family' };

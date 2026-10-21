@@ -34,23 +34,26 @@ ML.Screens = (function () {
     return 'You said ' + cat.name + ' ' + phrase + '. Is it?';
   }
 
-  function gutStandouts(state) {
-    var withGut = ML.Cats.activeCategories(state).filter(function (c) { return typeof state.gut[c.id] === 'number'; });
-    var self = null, spouse = null;
-    withGut.forEach(function (c) {
-      var v = state.gut[c.id];
-      if (v <= -1 && (!self || v < state.gut[self.id])) self = c;
-      if (v >= 1 && (!spouse || v > state.gut[spouse.id])) spouse = c;
-    });
-    return { self: self, spouse: spouse };
+  function gutThemeAverages(state) {
+    var active = ML.Cats.activeCategories(state);
+    return ML.GROUP_ORDER.map(function (g) {
+      var nums = active.filter(function (c) { return c.group === g; })
+        .map(function (c) { return state.gut[c.id]; })
+        .filter(function (v) { return typeof v === 'number'; });
+      if (!nums.length) return null;
+      return { group: g, avg: nums.reduce(function (a, b) { return a + b; }, 0) / nums.length };
+    }).filter(Boolean);
   }
 
   function gutStandoutText(state) {
-    var s = gutStandouts(state);
-    var parts = [];
-    if (s.self) parts.push('You look to be carrying more on ' + s.self.name + '.');
-    if (s.spouse) parts.push('Your spouse seems to be carrying more on ' + s.spouse.name + '.');
-    return parts.join(' ');
+    var avgs = gutThemeAverages(state);
+    if (!avgs.length) return '';
+    var lowest = avgs.reduce(function (a, b) { return a.avg <= b.avg ? a : b; });
+    var highest = avgs.reduce(function (a, b) { return a.avg >= b.avg ? a : b; });
+    var selfText = lowest.avg <= -0.5 ? 'You look to be carrying more ' + ML.GROUP_PHRASE[lowest.group] + '.' : null;
+    var spouseText = highest.avg >= 0.5 ? 'Your spouse seems to be carrying more ' + ML.GROUP_PHRASE[highest.group] + '.' : null;
+    if (!selfText && !spouseText) return 'It’s mixed across the board — no single area stands out yet.';
+    return [selfText, spouseText].filter(Boolean).join(' ');
   }
 
   function verdictText(v) {
